@@ -1,0 +1,136 @@
+
+<html>
+  <head>
+<h1>Welcome to the Calendar!</h1>
+{%load static%}
+{%load tz%}
+<link rel="stylesheet" href="{%static 'EquipmentSchedule/fullcalendar/fullcalendar.css'%}" type="text/css"/>
+<script src="{%static 'EquipmentSchedule/fullcalendar/jquery.min.js'%}"></script>
+<script src="{%static 'EquipmentSchedule/fullcalendar/moment.min.js'%}"></script>
+<script src="{%static 'EquipmentSchedule/fullcalendar/fullcalendar.js'%}"></script>
+
+<style>
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+</style>
+<div id= 'calendar'></div>
+<div id = 'popup' class = "modal">
+
+<div class="modal-content">
+
+  <span class="close">&times;</span>
+    <p> This is my modal, there are many like it, but this one is mine </p>
+    <form action="create/" method = "post">
+      {% csrf_token %}
+    <input id = "start_value" type = "datetime" name = "start">
+    <input id = "end_value" type = "datetime" name = "end">
+    <input id = "machine" type = "text" name = "machine">
+    <input id = "submit" type = "submit">
+    </form>
+  </div>
+
+</div>
+
+<script>
+// Get the modal
+var modal = document.getElementById('popup');
+
+// Get the button that opens the modal
+var btn = document.getElementById("myBtn");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+
+// When the user clicks on the button, open the modal
+
+
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+$(document).ready(function() {
+
+  $('#calendar').fullCalendar({
+    header:{
+    right:'month agendaWeek agendaDay',
+    left: 'prev,next',
+    },
+    defaultView: 'agendaWeek',
+    selectable: true,
+    selecthelper: true,
+    editable: true,
+    eventlimit: true,
+    timezone: 'local',
+
+    events: [
+
+      {%for event in event_list%}
+
+      {
+      editable : false,
+      start : '{{event.start_time|date:"m-d-Y H:i"}}',
+      title : '{{event.make_title}}',
+      end : '{{event.make_end_time|date:"m-d-Y H:i"}}',
+      },
+
+      {% endfor %}
+
+    ],
+    eventOverlap: false,
+    select: function(start,end){
+      modal.style.display = "block";
+      var duration = moment.duration(end.diff(start))
+      duration = duration.asHours()
+      document.getElementById('start_value').value = start
+      document.getElementById('end_value').value = duration
+    },
+
+
+  });
+});
+</script>
+</html>
