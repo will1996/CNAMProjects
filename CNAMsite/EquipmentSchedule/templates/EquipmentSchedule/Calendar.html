@@ -1,7 +1,17 @@
-
+{%extends 'base.html'%}
 <html>
+{%block title%}
+<strong>
+<h2>Calendar</h2>
+<h3> you have used {{user.profile.hourtotal}}hours, {{user.profile.hourallowance}} hours remaining</h3>
+</strong>
+<div style="vertical-align:top; float: centered; position: relative; left: 44%"> You're schedueling the {{ equipment }},</div>
+<a href="/EquipmentSchedule/select_calendar/" class="btn btn-default" style = "vertical-align:top; float: centered; position: relative; left: 45%">Schedule something else?</a>
+{%endblock%}
+{%block content%}
+
   <head>
-<h1>Welcome to the Calendar!</h1>
+
 {%load static%}
 {%load tz%}
 <link rel="stylesheet" href="{%static 'EquipmentSchedule/fullcalendar/fullcalendar.css'%}" type="text/css"/>
@@ -53,17 +63,23 @@
 
 <div id= 'calendar'></div>
 <div id = 'popup' class = "modal">
-<div id = 'target'></div>
+
 <div class="modal-content">
 
   <span class="close">&times;</span>
-    <p> This is my modal, there are many like it, but this one is mine </p>
-    <form action="create/">
+    <p> everything look good? </p>
+    <form id = "create_appt">
       {% csrf_token %}
+    <input id = "opperator" type="text" name="opperator" value = {{ opperator }} readonly>
     <input id = "start_value" type = "datetime" name = "start">
-    <input id = "end_value" type = "datetime" name = "end">
-    <input id = "machine" type = "text" name = "machine">
-    <input id = "myBtn" type = "button" value = "pushme">
+    <input id = "slot_duration" type = "datetime" name = "end">
+    <input list="equipment_list" id = "machine" name = "machine" value = {{ equipment }} readonly>
+ <datalist id="equipment_list">
+   <option value="PPMS">
+   <option value="Dyancool">
+   <option value="IonMill">
+ </datalist>
+    <input id = "myBtn" type = "submit" value = "Schedule me!">
     </form>
   </div>
 
@@ -83,7 +99,7 @@ $(document).ready(function() {
     selecthelper: true,
     editable: true,
     eventlimit: true,
-    timezone: 'local',
+    timezone: "UTC",
 
     events: [
 
@@ -105,8 +121,9 @@ $(document).ready(function() {
       var duration = moment.duration(end.diff(start))
       duration = duration.asHours()
       document.getElementById('start_value').value = start
-      document.getElementById('end_value').value = duration
+      document.getElementById('slot_duration').value = duration
     },
+
 
 
   });
@@ -139,16 +156,76 @@ window.onclick = function(event) {
         modal.style.display = "none";
     }
 }
-$(function(){
-ajax({
-    url:"Calendar/Create",
-    data: [start end],
-    cache: false,
-    success: function(){
-      $("target").text("appointment created");
+var postURL = "/EquipmentSchedule/Calendar/create/"
+var start = document.getElementById('start_value');
+var end = document.getElementById('end_value');
+var machine = document.getElementById('machine');
+var values = [start,end,machine];
+var jsonvalues = JSON.stringify(values);
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
     }
- });
- });
+    return cookieValue;
+}
+var csrftoken = getCookie('csrftoken');
+
+function csrfSafeMethod(method) {
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+$(document).on('submit','#create_appt',function(e){
+    e.preventDefault();
+  $.ajax({
+    type:"POST",
+    url:postURL,
+    data: {
+      start:$('#start_value').val(),
+      duration:$('#slot_duration').val(),
+      machine:$('#machine').val(),
+      opperator:$('#opperator').val()
+    },
+      success: function(result){
+        if (result['NoHours'] = 'True') {
+      alert('You are out of Hours! you have NOT been schedueled, Contact Admin, or wait until next week!');
+      location.reload();
+    }
+    else{
+      alert('you are all set! you will recieve an email shortly!')
+      location.reload();
+    }
+
+
+    },
+
+  });
+ modal.style.display = "none";
+ var event = {
+     editable : false,
+     start : start,
+     title : 'test',
+     end : end,
+   };
+ $('#calendar').fullCalendar('renderEvent',event,true);
+ modal.style.display = "none";
+});
 
 </script>
 </html>
+{%endblock%}

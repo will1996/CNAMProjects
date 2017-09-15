@@ -1,0 +1,11 @@
+{%extends 'base.html'%}
+{%block title%}
+Welcome to the schedueler!, to get started, select an equipment from the list below!
+{%endblock%}
+{%block content%}
+<h1>
+  {%for equipment in list%}
+    <li> <a href=/EquipmentSchedule/Calendar/?E={{equipment}} class="btn btn-default">{{ equipment }}</a> </li>
+    {%endfor%}
+</h1>
+{%endblock%}
