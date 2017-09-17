@@ -110,6 +110,7 @@ $(document).ready(function() {
       start : '{{event.start_time|date:"m-d-Y H:i"}}',
       title : '{{event.make_title}}',
       end : '{{event.make_end_time|date:"m-d-Y H:i"}}',
+      url : '/EquipmentSchedule/Calendar/view_event/?id={{event.id}}',
       },
 
       {% endfor %}
@@ -123,7 +124,9 @@ $(document).ready(function() {
       document.getElementById('start_value').value = start
       document.getElementById('slot_duration').value = duration
     },
-
+    dayClick: function(date){
+      alert(date.format())
+    },
 
 
   });
@@ -202,12 +205,14 @@ $(document).on('submit','#create_appt',function(e){
       opperator:$('#opperator').val()
     },
       success: function(result){
-        if (result['NoHours'] = 'True') {
+        if (result['NoHours']) {
       alert('You are out of Hours! you have NOT been schedueled, Contact Admin, or wait until next week!');
       location.reload();
-    }
-    else{
-      alert('you are all set! you will recieve an email shortly!')
+    } else if (result['Overlap']){
+      alert('that event conflicts with another users time, no dice!');
+      location.reload();
+    } else{
+      alert('you are all set, you will recieve an emial shortly');
       location.reload();
     }
 

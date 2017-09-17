@@ -24,10 +24,17 @@ def signup(request):
             raw_password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=raw_password)
             login(request, user)
-            return redirect('Calendar')
+            return redirect('select_calendar')
     else:
         form = SignUpForm()
     return render(request, 'EquipmentSchedule/signup.html', {'form': form})
+
+
+def view_event(request):
+    event_id = request.GET[id]
+    event = EquipmentSlot.objects.get(pk=event_id)
+    context = {'event': event}
+    return render(request, 'EquipmentSchedule/view_event.html', context)
 
 
 def logged_out(request):
@@ -48,6 +55,18 @@ def Calendar(request):
     return render(request, 'EquipmentSchedule/Calendar.html', context)
 
 
+def is_overlapping(start_time, end_time, equipment):
+    events = EquipmentSlot.objects.filter(equipment=equipment)
+    overlapping = False
+    for event in events:
+        if event.start_time <= start_time <= (event.start_time+event.slot_duration):
+            overlapping = True
+            return overlapping
+        elif event.start_time <= end_time <= (event.start_time+event.slot_duration):
+            overlapping = True
+            return overlapping
+    return overlapping
+
 def create(request):
     user = request.user
     opperator = request.POST['opperator']
@@ -58,8 +77,8 @@ def create(request):
     length = datetime.timedelta(hours=float(duration))
     user.profile.hourallowance = user.profile.hourallowance-float(duration)
     user.profile.hourtotal = user.profile.hourtotal + float(duration)
-    result = {'approved': True, 'NoHours': False, 'Overlap': False}
-    if user.profile.hourallowance > float(duration):
+    result = {'NoHours': False, 'Overlap': False}
+    if (float(user.profile.hourallowance) >= float(duration) and is_overlapping(start, (start+length), machine) is False):
         user.save()
         EquipmentSlot.objects.create(start_time=start,
                                      slot_duration=length,
@@ -67,8 +86,10 @@ def create(request):
                                      equipment=machine)
 
         return JsonResponse(result)
+    elif is_overlapping(start, (start+length), machine) is True:
+        result['Overlap'] = True
+        return JsonResponse(result)
     else:
-        result['approved'] = False
         result['NoHours'] = True
         return JsonResponse(result)
 

@@ -14,5 +14,6 @@ urlpatterns = [
     url(r'^Calendar/create/$', views.create, name="create"),
     url(r'^signup/$', EquipmentSchedule_views.signup, name="signup"),
     url(r'^select_calendar/$', EquipmentSchedule_views.select_calendar,
-        name="select_calendar")
+        name="select_calendar"),
+    url(r'^Calendar/view_event/$', views.view_event, name="view_event"),
 ]
